@@ -205,7 +205,7 @@ button,input,select,textarea {
   width:80%;
   max-height:575px;
   object-fit:contain;
-  mix-blend-mode:multiply
+  mix-blend-mode:normal
 }
 
 .vertical-caption {
@@ -418,7 +418,7 @@ button,input,select,textarea {
   width:85%;
   max-height:500px;
   object-fit:contain;
-  mix-blend-mode:multiply
+  mix-blend-mode:normal
 }
 
 .statement-copy {
