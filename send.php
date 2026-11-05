@@ -58,8 +58,47 @@ if (!in_array($type, $allowedTypes, true)) {
     respond(422, ['ok' => false, 'error' => 'Nieznany rodzaj pieczątki.']);
 }
 
-// Etap 1: walidacja danych. Wysyłanie SMTP dodamy po testach.
-respond(200, [
-    'ok' => true,
-    'message' => 'Dane formularza są poprawne. Wiadomość nie została wysłana.',
-]);
+
+// Ochrona przed znakami sterującymi w nagłówkach i treści wiadomości.
+if (preg_match('/[\r\n]/', $name) || preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $name . $message)) {
+    respond(422, ['ok' => false, 'error' => 'Niedozwolone znaki w formularzu.']);
+}
+
+$configPath = __DIR__ . '/private/smtp-config.php';
+if (!is_readable($configPath)) {
+    error_log('Brak konfiguracji SMTP.');
+    respond(503, ['ok' => false, 'error' => 'Wysyłanie wiadomości jest chwilowo niedostępne.']);
+}
+
+try {
+    $config = require $configPath;
+    if (!is_array($config)) {
+        throw new RuntimeException('Nieprawidłowa konfiguracja SMTP.');
+    }
+
+    require_once __DIR__ . '/vendor/autoload.php';
+
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    $mail->isSMTP();
+    $mail->Host = (string) $config['host'];
+    $mail->Port = (int) $config['port'];
+    $mail->SMTPAuth = true;
+    $mail->Username = (string) $config['username'];
+    $mail->Password = (string) $config['password'];
+    $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->CharSet = 'UTF-8';
+    $mail->Timeout = 15;
+
+    $mail->setFrom('formularz@stamp-pieczatki.pl', 'STEMPEL — formularz');
+    $mail->addAddress('baraniatko@hotmail.com');
+    $mail->addReplyTo($email, $name);
+    $mail->Subject = 'Zapytanie o pieczątkę — ' . $type;
+    $mail->Body = "Imię / firma: $name\nE-mail: $email\nProdukt: $type\n\n$message";
+    $mail->send();
+} catch (\Throwable $exception) {
+    // Nie logujemy pełnego wyjątku: może zawierać szczegóły połączenia SMTP.
+    error_log('Wysyłanie formularza nie powiodło się: ' . get_class($exception));
+    respond(502, ['ok' => false, 'error' => 'Nie udało się wysłać wiadomości. Spróbuj ponownie później.']);
+}
+
+respond(200, ['ok' => true, 'message' => 'Wiadomość została wysłana.']);
