@@ -512,6 +512,15 @@ button,input,select,textarea {
   background-color:#263333 !important
 }
 
+.contact .contact-honeypot {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip-path:inset(50%);
+  white-space:nowrap
+}
+
 .contact form button {
   margin-top:18px
 }
