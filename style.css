@@ -494,6 +494,17 @@ button,input,select,textarea {
   outline-color:#90ac47
 }
 
+.contact select {
+  color:#1c2929;
+  background-color:#fff;
+  color-scheme:light
+}
+
+.contact select option {
+  color:#1c2929;
+  background-color:#fff
+}
+
 .contact form button {
   margin-top:18px
 }
