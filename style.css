@@ -494,6 +494,33 @@ button,input,select,textarea {
   outline-color:#90ac47
 }
 
+/* Keep native select options legible in light and dark color schemes.
+   Dark Reader can invert the page independently of the OS preference. */
+/* Explicit dark dropdown; Dark Reader is excluded via darkreader-ignore. */
+.contact select.darkreader-ignore {
+  color:#fff !important;
+  background-color:#263333 !important;
+  -webkit-text-fill-color:#fff !important;
+  color-scheme:dark;
+  padding:13px 10px;
+  border:1px solid #82918b;
+  border-radius:5px
+}
+
+.contact select.darkreader-ignore option {
+  color:#fff !important;
+  background-color:#263333 !important
+}
+
+.contact .contact-honeypot {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip-path:inset(50%);
+  white-space:nowrap
+}
+
 .contact form button {
   margin-top:18px
 }
