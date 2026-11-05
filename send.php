@@ -37,6 +37,12 @@ function field(string $name, int $maxLength): string
     return $value;
 }
 
+// Pole-pułapka: zwykły użytkownik go nie wypełnia.
+$website = $_POST['website'] ?? '';
+if (!is_string($website) || $website !== '') {
+    respond(200, ['ok' => true, 'message' => 'Wiadomość została wysłana.']);
+}
+
 $name = field('name', 300);
 $email = field('email', 254);
 $type = field('type', 100);
@@ -63,6 +69,58 @@ if (!in_array($type, $allowedTypes, true)) {
 if (preg_match('/[\r\n]/', $name) || preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $name . $message)) {
     respond(422, ['ok' => false, 'error' => 'Niedozwolone znaki w formularzu.']);
 }
+
+// Maksymalnie 3 próby wysłania z jednego IP w ciągu 10 minut.
+// Stan trzymamy w chronionym katalogu private, nie w publicznym pliku.
+$ratePath = __DIR__ . '/private/contact-rate-limit.json';
+$handle = @fopen($ratePath, 'c+');
+if ($handle === false || !flock($handle, LOCK_EX)) {
+    if (is_resource($handle)) {
+        fclose($handle);
+    }
+    error_log('Nie można otworzyć blokady limitu formularza.');
+    respond(503, ['ok' => false, 'error' => 'Formularz jest chwilowo niedostępny. Spróbuj później.']);
+}
+
+$now = time();
+$ipKey = hash('sha256', (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+rewind($handle);
+$stored = stream_get_contents($handle);
+$history = json_decode($stored === false ? '' : $stored, true);
+if (!is_array($history)) {
+    $history = [];
+}
+foreach ($history as $key => $times) {
+    if (!is_array($times)) {
+        unset($history[$key]);
+        continue;
+    }
+    $times = array_values(array_filter($times, static fn ($t): bool =>
+        is_int($t) && $t > $now - 600 && $t <= $now
+    ));
+    if ($times === []) {
+        unset($history[$key]);
+    } else {
+        $history[$key] = $times;
+    }
+}
+if (count($history[$ipKey] ?? []) >= 3) {
+    flock($handle, LOCK_UN);
+    fclose($handle);
+    header('Retry-After: 600');
+    respond(429, ['ok' => false, 'error' => 'Zbyt wiele wiadomości. Spróbuj ponownie za około 10 minut.']);
+}
+$history[$ipKey][] = $now;
+$encoded = json_encode($history);
+rewind($handle);
+if ($encoded === false || !ftruncate($handle, 0) || fwrite($handle, $encoded) !== strlen($encoded) || !fflush($handle)) {
+    flock($handle, LOCK_UN);
+    fclose($handle);
+    error_log('Nie udało się zapisać limitu formularza.');
+    respond(503, ['ok' => false, 'error' => 'Formularz jest chwilowo niedostępny. Spróbuj później.']);
+}
+flock($handle, LOCK_UN);
+fclose($handle);
 
 $configPath = __DIR__ . '/private/smtp-config.php';
 if (!is_readable($configPath)) {
