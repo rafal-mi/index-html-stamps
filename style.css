@@ -496,9 +496,12 @@ button,input,select,textarea {
 
 /* Keep native select options legible in light and dark color schemes.
    Dark Reader can invert the page independently of the OS preference. */
+/* Native dropdown: readable selected value and options with Dark Reader. */
 .contact select {
-  color:var(--ink);
-  background-color:var(--bg);
+  color:#1c2929;
+  background-color:#f5f4ef;
+  -webkit-text-fill-color:currentColor;
+  color-scheme:light dark
 }
 
 .contact select option {
