@@ -148,7 +148,7 @@ try {
     $mail->Timeout = 15;
 
     $mail->setFrom('formularz@stamp-pieczatki.pl', 'STEMPEL — formularz');
-    $mail->addAddress('rafal.m4@gmail.com');
+    $mail->addAddress('baraniatko@hotmail.com');
     $mail->addReplyTo($email, $name);
     $mail->Subject = 'Zapytanie o pieczątkę — ' . $type;
     $mail->Body = "Imię / firma: $name\nE-mail: $email\nProdukt: $type\n\n$message";
