@@ -494,15 +494,16 @@ button,input,select,textarea {
   outline-color:#90ac47
 }
 
+/* Keep native select options legible in light and dark color schemes.
+   Dark Reader can invert the page independently of the OS preference. */
 .contact select {
-  color:#1c2929;
-  background-color:#fff;
-  color-scheme:light
+  color:var(--ink);
+  background-color:var(--bg);
 }
 
 .contact select option {
-  color:#1c2929;
-  background-color:#fff
+  color:CanvasText;
+  background-color:Canvas
 }
 
 .contact form button {
